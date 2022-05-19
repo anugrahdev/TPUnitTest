@@ -11,7 +11,10 @@ class AdvancedViewController: UIViewController {
 
     @IBOutlet weak var collectionView: UICollectionView!
     
+    let viewModel: AdvancedViewModel
+
     init() {
+        viewModel = AdvancedViewModel(usecase: AdvancedUseCase())
         super.init(nibName: "AdvancedViewController", bundle: nil)
     }
     
@@ -22,39 +25,50 @@ class AdvancedViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "Advanced Unit Test"
-        
+
         collectionView.register(UINib(nibName: "ProductCollectionViewCell", bundle: nil), forCellWithReuseIdentifier: "ProductCollectionViewCell")
         collectionView.dataSource = self
         collectionView.delegate = self
-        
+
         bindViewModel()
+        viewModel.didLoad()
     }
     
     func bindViewModel() {
-        
+        viewModel.receiveData = { [weak self] in
+            self?.collectionView.reloadData()
+        }
+
+        viewModel.onErrorReceiveData = { message in
+            print(message)
+        }
+
+        viewModel.doSideEffect = { message in
+            print(message)
+        }
     }
 }
 
 extension AdvancedViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 0
+        return viewModel.products.count
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ProductCollectionViewCell", for: indexPath) as! ProductCollectionViewCell
-        
+        cell.configure(product: viewModel.products[indexPath.row])
         return cell
     }
-}
+  }
 
-extension AdvancedViewController: UICollectionViewDelegateFlowLayout {
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: (collectionView.frame.width / 2) - 4, height: 300)
-    }
-}
+  extension AdvancedViewController: UICollectionViewDelegateFlowLayout {
+      func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+          return CGSize(width: (collectionView.frame.width / 2) - 4, height: 300)
+      }
+  }
 
-extension AdvancedViewController: UICollectionViewDelegate {
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        
-    }
-}
+  extension AdvancedViewController: UICollectionViewDelegate {
+      func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+          viewModel.didSelect(index: indexPath.row)
+      }
+  }
